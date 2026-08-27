@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uplift Faces</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 40px;
+        }
+
+        textarea {
+            width: 400px;
+            height: 120px;
+        }
+
+        canvas {
+            border: 1px solid #ccc;
+            margin-top: 30px;
+        }
+
+        #openness {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+
+        #status {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Uplift Faces</h1>
+
+    <textarea
+        id="text"
+        rows="5"
+        cols="50"
+        placeholder="Type something for Uplift to speak..."
+    >آج مارکیٹ میں کیا ریٹ ہے؟</textarea>
+
+    <br /><br />
+
+    <button id="speakButton">Speak</button>
+
+    <p id="status">Ready</p>
+
+    <audio id="audio" controls></audio>
+
+    <br />
+
+    <canvas id="canvas" width="400" height="300"></canvas>
+
+    <div id="openness">Openness: 0.00</div>
+
+    <script src="/lipSync.js"></script>
+
+    <script>
+        const textInput = document.getElementById("text");
+        const speakButton = document.getElementById("speakButton");
+        const status = document.getElementById("status");
+        const audio = document.getElementById("audio");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const opennessText = document.getElementById("openness");
+
+        let lipSync = null;
+
+        function drawFace(openness) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.beginPath();
+            ctx.arc(200, 150, 100, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(165, 120, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(235, 120, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            const mouthHeight = 5 + openness * 55;
+
+            ctx.beginPath();
+            ctx.ellipse(
+                200,
+                190,
+                45,
+                mouthHeight,
+                0,
+                0,
+                Math.PI * 2
+            );
+            ctx.stroke();
+        }
+
+        drawFace(0);
+
+        speakButton.addEventListener("click", async () => {
+            const text = textInput.value.trim();
+
+            if (!text) {
+                status.textContent = "Please enter some text.";
+                return;
+            }
+
+            speakButton.disabled = true;
+            status.textContent = "Generating speech...";
+
+            try {
+                const response = await fetch("/speak", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        voiceId: "street-vendor"
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error);
+                }
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                audio.src = audioUrl;
+
+                if (!lipSync) {
+                    lipSync = new LipSyncEngine(audio, {
+                        attackMs: 35,
+                        releaseMs: 130,
+                        noiseFloor: 0.02,
+
+                        onUpdate: (openness) => {
+                            opennessText.textContent =
+                                `Openness: ${openness.toFixed(2)}`;
+
+                            drawFace(openness);
+                        }
+                    });
+
+                    await lipSync.attach();
+                }
+
+                await audio.play();
+
+                status.textContent = "Speech generated successfully.";
+
+            } catch (error) {
+                console.error(error);
+                status.textContent = "Error generating speech.";
+            } finally {
+                speakButton.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+</html>

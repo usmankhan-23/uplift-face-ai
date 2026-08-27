@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Uplift Faces - Audio Test</title>
+    </head>
+    <body>
+        <h1>Uplift Faces</h1>
+
+        <textarea
+            id="text"
+            rows="5"
+            cols="50"
+            placeholder="Type something for Uplift to speak..."
+        >
+آج مارکیٹ میں کیا ریٹ ہے؟</textarea
+        >
+
+        <br /><br />
+
+        <button id="speakButton">Speak</button>
+
+        <p id="status">Ready</p>
+
+        <audio id="audio" controls></audio>
+
+        <script>
+            const textInput = document.getElementById("text");
+            const speakButton = document.getElementById("speakButton");
+            const status = document.getElementById("status");
+            const audio = document.getElementById("audio");
+
+            speakButton.addEventListener("click", async () => {
+                const text = textInput.value.trim();
+
+                if (!text) {
+                    status.textContent = "Please enter some text.";
+                    return;
+                }
+
+                speakButton.disabled = true;
+                status.textContent = "Generating speech...";
+
+                try {
+                    const response = await fetch("/speak", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            text: text,
+                            voiceId: "v_8eelc901",
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.text();
+                        throw new Error(error);
+                    }
+
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+
+                    audio.src = audioUrl;
+                    audio.play();
+
+                    status.textContent = "Speech generated successfully.";
+                } catch (error) {
+                    console.error(error);
+                    status.textContent = "Error generating speech.";
+                } finally {
+                    speakButton.disabled = false;
+                }
+            });
+        </script>
+    </body>
+</html>

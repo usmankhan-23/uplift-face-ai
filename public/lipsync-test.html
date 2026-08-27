@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Uplift Faces - Lip Sync Test</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 40px;
+      }
+
+      canvas {
+        border: 1px solid #ccc;
+        margin-top: 30px;
+      }
+
+      #openness {
+        font-size: 24px;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Uplift Faces</h1>
+
+    <p>Upload a speech audio file.</p>
+
+    <input type="file" id="audioFile" accept="audio/*" />
+
+    <br /><br />
+
+    <audio id="audio" controls></audio>
+
+    <canvas id="canvas" width="400" height="300"></canvas>
+
+    <div id="openness">Openness: 0.00</div>
+
+    <script src="/lipSync.js"></script>
+
+    <script>
+      const audio = document.getElementById("audio");
+      const audioFile = document.getElementById("audioFile");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const opennessText = document.getElementById("openness");
+
+      let lipSync;
+
+      audioFile.addEventListener("change", async () => {
+        const file = audioFile.files[0];
+
+        if (!file) return;
+
+        audio.src = URL.createObjectURL(file);
+
+        lipSync = new LipSyncEngine(audio, {
+          attackMs: 35,
+          releaseMs: 130,
+          noiseFloor: 0.02,
+
+          onUpdate: (openness) => {
+            opennessText.textContent = `Openness: ${openness.toFixed(2)}`;
+
+            drawFace(openness);
+          },
+        });
+
+        await lipSync.attach();
+      });
+
+      function drawFace(openness) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.beginPath();
+        ctx.arc(200, 150, 100, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(165, 120, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(235, 120, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        const mouthHeight = 5 + openness * 55;
+
+        ctx.beginPath();
+
+        ctx.ellipse(200, 190, 45, mouthHeight, 0, 0, Math.PI * 2);
+
+        ctx.stroke();
+      }
+
+      drawFace(0);
+    </script>
+  </body>
+</html>
