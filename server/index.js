@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.post("/speak", async (req, res) => {
     const {
         text,
-        voiceId = "v_8eelc901"
+        voiceId = "street-vendor"
     } = req.body;
 
     if (!text || typeof text !== "string") {
