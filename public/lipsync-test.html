@@ -49,7 +49,55 @@
       const ctx = canvas.getContext("2d");
       const opennessText = document.getElementById("openness");
 
+      const spritePaths = [
+        "/assets/street-vendor/street_vendor_closed.png",
+        "/assets/street-vendor/street_vendor_half.png",
+        "/assets/street-vendor/street_vendor_open.png",
+      ];
+
+      const sprites = spritePaths.map((path) => {
+        const image = new Image();
+        image.src = path;
+        return image;
+      });
+
       let lipSync;
+
+      function drawFace(openness) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let spriteIndex;
+
+        if (openness < 0.34) {
+          spriteIndex = 0;
+        } else if (openness < 0.67) {
+          spriteIndex = 1;
+        } else {
+          spriteIndex = 2;
+        }
+
+        const sprite = sprites[spriteIndex];
+
+        if (!sprite.complete || !sprite.naturalWidth) {
+          return;
+        }
+
+        const maxWidth = 260;
+        const maxHeight = 285;
+
+        const scale = Math.min(
+          maxWidth / sprite.naturalWidth,
+          maxHeight / sprite.naturalHeight
+        );
+
+        const width = sprite.naturalWidth * scale;
+        const height = sprite.naturalHeight * scale;
+
+        const x = (canvas.width - width) / 2;
+        const y = (canvas.height - height) / 2;
+
+        ctx.drawImage(sprite, x, y, width, height);
+      }
 
       audioFile.addEventListener("change", async () => {
         const file = audioFile.files[0];
@@ -73,29 +121,17 @@
         await lipSync.attach();
       });
 
-      function drawFace(openness) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      sprites[0].addEventListener("load", () => {
+        drawFace(0);
+      });
 
-        ctx.beginPath();
-        ctx.arc(200, 150, 100, 0, Math.PI * 2);
-        ctx.stroke();
+      sprites[1].addEventListener("load", () => {
+        drawFace(0);
+      });
 
-        ctx.beginPath();
-        ctx.arc(165, 120, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(235, 120, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        const mouthHeight = 5 + openness * 55;
-
-        ctx.beginPath();
-
-        ctx.ellipse(200, 190, 45, mouthHeight, 0, 0, Math.PI * 2);
-
-        ctx.stroke();
-      }
+      sprites[2].addEventListener("load", () => {
+        drawFace(0);
+      });
 
       drawFace(0);
     </script>
