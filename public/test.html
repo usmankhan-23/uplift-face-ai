@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Uplift Faces</title>
 
     <style>
@@ -54,116 +55,92 @@
 
     <br />
 
-    <canvas id="canvas" width="400" height="300"></canvas>
+    <canvas
+        id="canvas"
+        width="400"
+        height="300"
+    ></canvas>
 
     <div id="openness">Openness: 0.00</div>
 
     <script src="/lipSync.js"></script>
+    <script src="/widget.js"></script>
 
     <script>
-        const textInput = document.getElementById("text");
-        const speakButton = document.getElementById("speakButton");
-        const status = document.getElementById("status");
-        const audio = document.getElementById("audio");
-        const canvas = document.getElementById("canvas");
-        const ctx = canvas.getContext("2d");
-        const opennessText = document.getElementById("openness");
+        const textInput =
+            document.getElementById("text");
 
-        let lipSync = null;
+        const speakButton =
+            document.getElementById("speakButton");
 
-        function drawFace(openness) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const status =
+            document.getElementById("status");
 
-            ctx.beginPath();
-            ctx.arc(200, 150, 100, 0, Math.PI * 2);
-            ctx.stroke();
+        const audio =
+            document.getElementById("audio");
 
-            ctx.beginPath();
-            ctx.arc(165, 120, 8, 0, Math.PI * 2);
-            ctx.fill();
+        const canvas =
+            document.getElementById("canvas");
 
-            ctx.beginPath();
-            ctx.arc(235, 120, 8, 0, Math.PI * 2);
-            ctx.fill();
+        const openness =
+            document.getElementById("openness");
 
-            const mouthHeight = 5 + openness * 55;
+        let upliftFace = null;
 
-            ctx.beginPath();
-            ctx.ellipse(
-                200,
-                190,
-                45,
-                mouthHeight,
-                0,
-                0,
-                Math.PI * 2
-            );
-            ctx.stroke();
-        }
-
-        drawFace(0);
-
-        speakButton.addEventListener("click", async () => {
-            const text = textInput.value.trim();
-
-            if (!text) {
-                status.textContent = "Please enter some text.";
-                return;
-            }
-
-            speakButton.disabled = true;
-            status.textContent = "Generating speech...";
-
+        async function initialize() {
             try {
-                const response = await fetch("/speak", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        text: text,
-                        voiceId: "street-vendor"
-                    })
+                upliftFace = await UpliftFace.init({
+                    target: canvas,
+                    audio: audio,
+                    status: status,
+                    openness: openness,
+                    voiceId: "street-vendor"
                 });
 
-                if (!response.ok) {
-                    const error = await response.text();
-                    throw new Error(error);
-                }
-
-                const audioBlob = await response.blob();
-                const audioUrl = URL.createObjectURL(audioBlob);
-
-                audio.src = audioUrl;
-
-                if (!lipSync) {
-                    lipSync = new LipSyncEngine(audio, {
-                        attackMs: 35,
-                        releaseMs: 130,
-                        noiseFloor: 0.02,
-
-                        onUpdate: (openness) => {
-                            opennessText.textContent =
-                                `Openness: ${openness.toFixed(2)}`;
-
-                            drawFace(openness);
-                        }
-                    });
-
-                    await lipSync.attach();
-                }
-
-                await audio.play();
-
-                status.textContent = "Speech generated successfully.";
-
+                status.textContent = "Ready";
             } catch (error) {
                 console.error(error);
-                status.textContent = "Error generating speech.";
-            } finally {
-                speakButton.disabled = false;
+                status.textContent =
+                    "Error loading Uplift Face.";
             }
-        });
+        }
+
+        speakButton.addEventListener(
+            "click",
+            async () => {
+                const text =
+                    textInput.value.trim();
+
+                if (!text) {
+                    status.textContent =
+                        "Please enter some text.";
+
+                    return;
+                }
+
+                if (!upliftFace) {
+                    status.textContent =
+                        "Face is still loading.";
+
+                    return;
+                }
+
+                speakButton.disabled = true;
+
+                try {
+                    await upliftFace.speak(text);
+                } catch (error) {
+                    console.error(error);
+
+                    status.textContent =
+                        "Error generating speech.";
+                } finally {
+                    speakButton.disabled = false;
+                }
+            }
+        );
+
+        initialize();
     </script>
 
 </body>
