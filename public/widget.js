@@ -15,8 +15,10 @@ class UpliftFace {
         this.ctx = this.canvas.getContext("2d");
 
         this.lipSync = null;
+        this.audioUrl = null;
 
         this.sprites = [];
+
         this.spritePaths = [
             "/assets/street-vendor/street_vendor_closed.png",
             "/assets/street-vendor/street_vendor_half.png",
@@ -29,23 +31,6 @@ class UpliftFace {
 
         this.drawFace(0);
 
-        this.lipSync = new LipSyncEngine(this.audio, {
-            attackMs: this.attackMs,
-            releaseMs: this.releaseMs,
-            noiseFloor: this.noiseFloor,
-
-            onUpdate: (openness) => {
-                if (this.opennessDisplay) {
-                    this.opennessDisplay.textContent =
-                        `Openness: ${openness.toFixed(2)}`;
-                }
-
-                this.drawFace(openness);
-            }
-        });
-
-        await this.lipSync.attach();
-
         return this;
     }
 
@@ -56,9 +41,12 @@ class UpliftFace {
                     const image = new Image();
 
                     image.onload = () => resolve(image);
+
                     image.onerror = () => {
                         reject(
-                            new Error(`Failed to load sprite: ${path}`)
+                            new Error(
+                                `Failed to load sprite: ${path}`
+                            )
                         );
                     };
 
@@ -68,6 +56,29 @@ class UpliftFace {
         ).then((sprites) => {
             this.sprites = sprites;
         });
+    }
+
+    async attachLipSync() {
+        if (this.lipSync) {
+            return;
+        }
+
+        this.lipSync = new LipSyncEngine(this.audio, {
+            attackMs: this.attackMs,
+            releaseMs: this.releaseMs,
+            noiseFloor: this.noiseFloor,
+
+            onUpdate: (openness) => {
+                if (this.opennessDisplay) {
+                    this.opennessDisplay.textContent =
+                        openness.toFixed(2);
+                }
+
+                this.drawFace(openness);
+            }
+        });
+
+        await this.lipSync.attach();
     }
 
     drawFace(openness) {
@@ -125,14 +136,19 @@ class UpliftFace {
         }
 
         if (this.status) {
-            this.status.textContent = "Generating speech...";
+            this.status.textContent =
+                "Generating speech...";
+
+            this.status.style.color = "";
         }
 
         const response = await fetch("/speak", {
             method: "POST",
+
             headers: {
                 "Content-Type": "application/json"
             },
+
             body: JSON.stringify({
                 text: cleanText,
                 voiceId: this.voiceId
@@ -141,19 +157,29 @@ class UpliftFace {
 
         if (!response.ok) {
             const error = await response.text();
+
             throw new Error(error);
         }
 
         const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
 
-        this.audio.src = audioUrl;
+        if (this.audioUrl) {
+            URL.revokeObjectURL(this.audioUrl);
+        }
+
+        this.audioUrl = URL.createObjectURL(audioBlob);
+
+        this.audio.src = this.audioUrl;
+
+        await this.attachLipSync();
 
         await this.audio.play();
 
         if (this.status) {
             this.status.textContent =
-                "Speech generated successfully.";
+                "Speaking with real-time lip sync.";
+
+            this.status.style.color = "";
         }
     }
 
