@@ -5,7 +5,12 @@ class UpliftFace {
         this.status = options.status || null;
         this.opennessDisplay = options.openness || null;
 
-        this.voiceId = options.voiceId || "street-vendor";
+        this.characterId =
+            options.characterId ||
+            "street-vendor";
+
+        this.character = null;
+        this.voiceId = null;
 
         this.attackMs = options.attackMs ?? 35;
         this.releaseMs = options.releaseMs ?? 130;
@@ -18,18 +23,12 @@ class UpliftFace {
         this.audioUrl = null;
 
         this.sprites = [];
-
-        this.spritePaths = [
-            "/assets/street-vendor/street_vendor_closed.png",
-            "/assets/street-vendor/street_vendor_half.png",
-            "/assets/street-vendor/street_vendor_open.png"
-        ];
+        this.spritePaths = [];
+        this.currentOpenness = 0;
     }
 
     async init() {
-        await this.loadSprites();
-
-        this.drawFace(0);
+        await this.setCharacter(this.characterId);
 
         return this;
     }
@@ -58,6 +57,34 @@ class UpliftFace {
         });
     }
 
+    async setCharacter(characterId) {
+        if (!window.getUpliftCharacter) {
+            throw new Error("Uplift character registry is not loaded.");
+        }
+
+        const character = window.getUpliftCharacter(characterId);
+
+        if (!character) {
+            throw new Error(`Unknown Uplift character: ${characterId}`);
+        }
+
+        this.characterId = character.id;
+        this.character = character;
+        this.voiceId = character.voiceId;
+
+        this.spritePaths = [
+            character.sprites.closed,
+            character.sprites.half,
+            character.sprites.open
+        ];
+
+        await this.loadSprites();
+
+        this.drawFace(this.currentOpenness);
+
+        return character;
+    }
+
     async attachLipSync() {
         if (this.lipSync) {
             return;
@@ -82,6 +109,8 @@ class UpliftFace {
     }
 
     drawFace(openness) {
+        this.currentOpenness = openness;
+
         this.ctx.clearRect(
             0,
             0,

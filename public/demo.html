@@ -619,6 +619,97 @@
         }
 
         /* --------------------------------------------------
+           CHARACTER SELECTOR
+        -------------------------------------------------- */
+
+        .character-selector {
+            display: grid;
+            gap: 10px;
+        }
+
+        .character-options {
+            display: grid;
+            gap: 8px;
+        }
+
+        .character-option {
+            width: 100%;
+
+            display: grid;
+            grid-template-columns: 38px 1fr;
+            gap: 12px;
+            align-items: center;
+
+            padding: 11px;
+
+            border: 1px solid var(--border);
+            border-radius: 15px;
+
+            cursor: pointer;
+            text-align: left;
+
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.13);
+
+            transition:
+                border-color 160ms ease,
+                background 160ms ease,
+                transform 160ms ease;
+        }
+
+        .character-option:hover {
+            border-color: var(--border-hover);
+            background: var(--accent-soft);
+            transform: translateY(-1px);
+        }
+
+        .character-option.active {
+            border-color: var(--border-hover);
+            background: rgba(121, 216, 179, 0.11);
+        }
+
+        .character-option-thumb {
+            width: 38px;
+            height: 38px;
+
+            display: grid;
+            place-items: center;
+
+            border: 1px solid var(--border);
+            border-radius: 12px;
+
+            overflow: hidden;
+            background: rgba(2, 11, 9, 0.4);
+        }
+
+        .character-option-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .character-option-name {
+            display: block;
+
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .character-option-meta {
+            display: block;
+
+            margin-top: 3px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+            font-weight: 750;
+
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        /* --------------------------------------------------
            SPEAK BUTTON
         -------------------------------------------------- */
 
@@ -967,7 +1058,10 @@
                             class="character-avatar-dot"
                         ></span>
 
-                        <p class="character-name">
+                        <p
+                            id="activeCharacterName"
+                            class="character-name"
+                        >
                             Street Vendor
                         </p>
 
@@ -1000,11 +1094,11 @@
                     ></canvas>
 
                     <div class="character-caption">
-                        <strong>
+                        <strong id="captionCharacterName">
                             Uplift Character
                         </strong>
 
-                        <span>
+                        <span id="captionCharacterDescription">
                             Real-time facial response
                         </span>
                     </div>
@@ -1033,6 +1127,19 @@
             <!-- CONTROLS -->
 
             <div class="card controls-card">
+
+                <div class="character-selector">
+
+                    <p class="section-label">
+                        Character
+                    </p>
+
+                    <div
+                        id="characterOptions"
+                        class="character-options"
+                    ></div>
+
+                </div>
 
                 <div>
 
@@ -1100,7 +1207,10 @@
                             Voice
                         </div>
 
-                        <div class="metric-value active">
+                        <div
+                            id="voiceMetric"
+                            class="metric-value active"
+                        >
                             Uplift AI
                         </div>
 
@@ -1142,7 +1252,10 @@
                             Character
                         </div>
 
-                        <div class="metric-value">
+                        <div
+                            id="characterMetric"
+                            class="metric-value"
+                        >
                             Street Vendor
                         </div>
 
@@ -1178,6 +1291,7 @@
 </div>
 
 <script src="/lipSync.js"></script>
+<script src="/character-registry.js"></script>
 <script src="/widget.js"></script>
 
 <script>
@@ -1220,7 +1334,154 @@
     const headerDot =
         document.getElementById("headerDot");
 
+    const characterOptions =
+        document.getElementById("characterOptions");
+
+    const activeCharacterName =
+        document.getElementById("activeCharacterName");
+
+    const captionCharacterName =
+        document.getElementById("captionCharacterName");
+
+    const captionCharacterDescription =
+        document.getElementById("captionCharacterDescription");
+
+    const voiceMetric =
+        document.getElementById("voiceMetric");
+
+    const characterMetric =
+        document.getElementById("characterMetric");
+
     let upliftFace = null;
+    let selectedCharacterId = "street-vendor";
+
+    function updateCharacterDetails(character) {
+
+        activeCharacterName.textContent =
+            character.name;
+
+        captionCharacterName.textContent =
+            character.name;
+
+        captionCharacterDescription.textContent =
+            character.description;
+
+        voiceMetric.textContent =
+            character.language;
+
+        characterMetric.textContent =
+            `${character.category} · ${character.language}`;
+    }
+
+    function updateCharacterSelection(characterId) {
+
+        document
+            .querySelectorAll(".character-option")
+            .forEach((button) => {
+
+                button.classList.toggle(
+                    "active",
+                    button.dataset.characterId === characterId
+                );
+
+            });
+    }
+
+    function renderCharacterOptions() {
+
+        characterOptions.innerHTML = "";
+
+        window.UPLIFT_CHARACTERS.forEach((character) => {
+
+            const button =
+                document.createElement("button");
+
+            button.type = "button";
+            button.className = "character-option";
+            button.dataset.characterId = character.id;
+
+            button.innerHTML = `
+                <span class="character-option-thumb">
+                    <img
+                        src="${character.sprites.closed}"
+                        alt=""
+                    />
+                </span>
+
+                <span>
+                    <span class="character-option-name">
+                        ${character.name}
+                    </span>
+
+                    <span class="character-option-meta">
+                        ${character.category} · ${character.language}
+                    </span>
+                </span>
+            `;
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    await selectCharacter(character.id);
+                }
+            );
+
+            characterOptions.appendChild(button);
+        });
+    }
+
+    async function selectCharacter(characterId) {
+
+        const character =
+            window.getUpliftCharacter(characterId);
+
+        if (!character) {
+
+            status.textContent =
+                "Unknown character selected.";
+
+            status.style.color =
+                "var(--danger)";
+
+            return;
+        }
+
+        selectedCharacterId =
+            character.id;
+
+        updateCharacterDetails(character);
+        updateCharacterSelection(character.id);
+
+        if (upliftFace) {
+
+            speakButton.disabled = true;
+
+            try {
+
+                await upliftFace.setCharacter(character.id);
+
+                status.textContent =
+                    "Ready — give the character something to say.";
+
+                status.style.color = "";
+
+            } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                    "Unable to switch character.";
+
+                status.style.color =
+                    "var(--danger)";
+
+            } finally {
+
+                speakButton.disabled = false;
+            }
+        }
+    }
 
     function setSpeakingState(isSpeaking) {
 
@@ -1308,7 +1569,7 @@
                     audio: audio,
                     status: status,
                     openness: openness,
-                    voiceId: "street-vendor"
+                    characterId: selectedCharacterId
                 });
 
             status.textContent =
@@ -1399,6 +1660,8 @@
 
         });
 
+    renderCharacterOptions();
+    selectCharacter(selectedCharacterId);
     initialize();
 </script>
 
