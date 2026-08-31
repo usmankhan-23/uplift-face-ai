@@ -54,6 +54,20 @@
                 half: "/assets/college-girl/half.png",
                 open: "/assets/college-girl/open.png"
             })
+        }),
+
+        Object.freeze({
+            id: "shopkeeper",
+            name: "Shopkeeper",
+            voiceId: "shopkeeper",
+            description: "Friendly Pakistani shopkeeper",
+            language: "Urdu",
+            category: "Everyday",
+            sprites: Object.freeze({
+                closed: "/assets/shopkeeper/closed.png",
+                half: "/assets/shopkeeper/half.png",
+                open: "/assets/shopkeeper/open.png"
+            })
         })
     ]);
 
