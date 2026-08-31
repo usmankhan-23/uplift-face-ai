@@ -40,6 +40,20 @@
                 half: "/assets/young-student/half.png",
                 open: "/assets/young-student/open.png"
             })
+        }),
+
+        Object.freeze({
+            id: "college-girl",
+            name: "College Girl",
+            voiceId: "college-girl",
+            description: "Friendly young Pakistani college student",
+            language: "Urdu",
+            category: "Student",
+            sprites: Object.freeze({
+                closed: "/assets/college-girl/closed.png",
+                half: "/assets/college-girl/half.png",
+                open: "/assets/college-girl/open.png"
+            })
         })
     ]);
 
