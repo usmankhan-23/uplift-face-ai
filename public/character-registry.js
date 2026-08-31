@@ -26,6 +26,20 @@
                 half: "/assets/dada-jee/half.png",
                 open: "/assets/dada-jee/open.png"
             })
+        }),
+
+        Object.freeze({
+            id: "young-student",
+            name: "Young Pakistani Student",
+            voiceId: "nazimabad-boy",
+            description: "Friendly young Pakistani university student",
+            language: "Urdu",
+            category: "Student",
+            sprites: Object.freeze({
+                closed: "/assets/young-student/closed.png",
+                half: "/assets/young-student/half.png",
+                open: "/assets/young-student/open.png"
+            })
         })
     ]);
 
