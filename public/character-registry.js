@@ -68,6 +68,20 @@
                 half: "/assets/shopkeeper/half.png",
                 open: "/assets/shopkeeper/open.png"
             })
+        }),
+
+        Object.freeze({
+            id: "pakistani-teacher",
+            name: "Pakistani Teacher",
+            voiceId: "urdu-professor",
+            description: "Calm and knowledgeable Pakistani university teacher",
+            language: "Urdu",
+            category: "Education",
+            sprites: Object.freeze({
+                closed: "/assets/pakistani-teacher/closed.png",
+                half: "/assets/pakistani-teacher/half.png",
+                open: "/assets/pakistani-teacher/open.png"
+            })
         })
     ]);
 
