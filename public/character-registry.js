@@ -82,6 +82,20 @@
                 half: "/assets/pakistani-teacher/half.png",
                 open: "/assets/pakistani-teacher/open.png"
             })
+        }),
+
+        Object.freeze({
+            id: "bus-conductor",
+            name: "Bus Conductor",
+            voiceId: "bus-conductor",
+            description: "Friendly Pakistani public-bus conductor",
+            language: "Urdu",
+            category: "Everyday",
+            sprites: Object.freeze({
+                closed: "/assets/bus-conductor/closed.png",
+                half: "/assets/bus-conductor/half.png",
+                open: "/assets/bus-conductor/open.png"
+            })
         })
     ]);
 
